@@ -28,9 +28,9 @@ private:
 
 public:
     HttpTransaction();
-	void setHeaders(std::string key, std::string value);
-	std::string getHeaders();
-        std::string getHeader(std::string key);
+    void setHeaders(std::string& key, std::string& value);
+    std::string getHeaders();
+    std::string getHeader(std::string& key);
     void setHttpVersion(std::string &);
     std::string getHttpVersion();
 };

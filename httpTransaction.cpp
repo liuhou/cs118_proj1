@@ -24,13 +24,13 @@ void HttpTransaction :: HttpTransaction(){
     httpVersion = "";
     headers.clear();
 }
-void HttpTransaction :: setHeaders(std::string key, std::string value){
+void HttpTransaction :: setHeaders(string& key, string& value){
     headers[key] = value;
 }
 string HttpTransaction ::getHeaders(){
-    std::string result = "";
-    std::map<std::string, std::string>::iterator iter = headers.begin();
-	while (iter != headers.end())
+    string result = "";
+    map<string, string>::iterator iter = headers.begin();
+    while (iter != headers.end())
 	{
             result = result + iter->first + ": " + iter->second + "\r\n";
             iter++;
@@ -38,7 +38,7 @@ string HttpTransaction ::getHeaders(){
 	result = result + "\r\n";
 	return result;
 }
-string HttpTransaction ::getHeader(string key){
+string HttpTransaction ::getHeader(string& key){
     if(headers.count(key) > 0){
         return headers[key];
     }else{
@@ -53,13 +53,13 @@ string HttpTransaction::getHttpVersion(){
     return httpVersion;
 }
 
-void HttpRequest::setRequestUrl(std::string& uri){
+void HttpRequest::setRequestUrl(string& uri){
     requestUrl = uri;
 }
 string HttpRequest::getRequestUrl(){
     return requestUrl;
 }
-string HttpRequest::setMethod(std::string& newMethod){
+string HttpRequest::setMethod(string& newMethod){
     method = newMethod;
 }
 string HttpRequest::getMethod(){
@@ -106,4 +106,6 @@ vector<unit8_t> HttpResponse::encode(){
     str = str + getHttpVersion() + " " + getStatus() + " " + getStatusDefinition() + "\r\n";
     str = str + getHeaders();
     result.assign(str.begin(), str.end());
+    
+    return result;
 }

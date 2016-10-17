@@ -17,7 +17,8 @@
 #include <vector>
 #include <string>
 #include <istream>
-
+#include <cstdint>
+//typedef unsigned char uint8_t;
 typedef std::map<std::string, std::string> HeaderMap;
 typedef std::vector<std::uint8_t> ByteVector;
 
@@ -33,6 +34,7 @@ public:
     std::string getHeader(std::string& key);
     void setHttpVersion(std::string &);
     std::string getHttpVersion();
+    void decodeHeaders(ByteVector&);
 };
 
 class HttpRequest: public HttpTransaction {
@@ -42,16 +44,17 @@ private:
 public:
     // TODO: build a constructor that takes vector/array of bytes as input
 
-    void setRequestUri(std::string &);
+    void setRequestUrl(std::string &);
     std::string getRequestUrl();
 
-    void setMethod(std::string &);
+    void setMethod(std::string&);
     std::string getMethod();
 
     std::string toRequestString();
     void parseFromMessageString(std::string &);
 
-    std::vector<uint8_t> encode();
+    std::vector<std::uint8_t> encode();
+    bool decodeFirstline(ByteVector&);
 };
 
 class HttpResponse: public HttpTransaction {
@@ -69,8 +72,8 @@ public:
     int getStatus();
     std::string getStatusDefinition();
     //std::string toResponseString();
-    std::vector<uint8_t> encode();
-
+    std::vector<std::uint8_t> encode();
+    bool decodeFirstline(ByteVector&);
     // use std::istream type to represent file in the content
 };
 

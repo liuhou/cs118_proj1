@@ -12,7 +12,7 @@
  */
 
 #include <cstdlib>
-
+#include <string>
 #include "httpTransaction.h"
 
 using namespace std;
@@ -20,7 +20,7 @@ using namespace std;
 /*
  * 
  */
-void HttpTransaction :: HttpTransaction(){
+HttpTransaction :: HttpTransaction(){
     httpVersion = "";
     headers.clear();
 }
@@ -59,7 +59,7 @@ void HttpRequest::setRequestUrl(string& uri){
 string HttpRequest::getRequestUrl(){
     return requestUrl;
 }
-string HttpRequest::setMethod(string& newMethod){
+void HttpRequest::setMethod(string& newMethod){
     method = newMethod;
 }
 string HttpRequest::getMethod(){
@@ -73,9 +73,38 @@ string HttpRequest::toRequestString(){
 }
 vector<uint8_t> HttpRequest::encode(){
     string str = toRequestString();
-    vector<unit8_t> result;
+    vector<uint8_t> result;
     result.assign(str.begin(), str.end());
     return result;
+}
+bool HttpRequest::decodeFirstline(ByteVector& first){
+    string str = "";
+    int numOfSp = 0;
+    for(int i = 0; first[i] != '\r'; i++){
+        if(first[i] == ' '){
+            numOfSp++;
+            if(numOfSp == 1){
+                setMethod(str);
+                str = "";
+            }else if(numOfSp == 2){
+                setRequestUrl(str);
+                str = "";
+            }
+            if(i > 0 && first[i - 1] == ' ' && numOfSp > 2){
+                return false;
+            }
+            continue;
+        }
+        str = str.append(first[i]);
+    }
+    setHttpVersion(str);
+    if(getMethod().compare("GET") != 0){
+        return false;
+    }
+    if(getHttpVersion().compare("HTTP/1.0") != 0){
+        return false;
+    }
+    return true;
 }
 void HttpResponse::setStatus(int responsestatus){
     status = responsestatus;
@@ -100,12 +129,31 @@ string HttpResponse::getStatusDefinition(){
     string result;
     
 }*/
-vector<unit8_t> HttpResponse::encode(){
-    vector<unit8_t> result;
+vector<uint8_t> HttpResponse::encode(){
+    vector<uint8_t> result;
     string str = "";
     str = str + getHttpVersion() + " " + getStatus() + " " + getStatusDefinition() + "\r\n";
     str = str + getHeaders();
     result.assign(str.begin(), str.end());
     
     return result;
+}
+bool HttpResponse::decodeFirstline(ByteVector& first){
+    string str = "";
+    int numOfSp = 0;
+    for(int i = 0; first[i] != '\r'; i++){
+        if(first[i] == ' '){
+            numOfSp++;
+            if(numOfSp == 1){
+                setHttpVersion(str);
+                str = "";
+            }else if(numOfSp == 2){
+                setStatus(atoi(str.c_str()));
+                str = "";
+            }
+            continue;
+        }
+        str.append(first[i]);
+    }
+    return true;
 }

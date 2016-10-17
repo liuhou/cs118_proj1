@@ -19,7 +19,7 @@
 #include <istream>
 
 typedef std::map<std::string, std::string> HeaderMap;
-typedef std::vector<std::uint8_t> ByteVector;
+typedef std::vector<uint8_t> ByteVector;
 
 class HttpTransaction {
 private:
@@ -38,18 +38,18 @@ public:
 class HttpRequest: public HttpTransaction {
 private:
     std::string method;
-    std::string requestUrl;
+    std::string requestUri;
 public:
     // TODO: build a constructor that takes vector/array of bytes as input
 
     void setRequestUri(std::string &);
-    std::string getRequestUrl();
+    std::string getRequestUri();
 
     void setMethod(std::string &);
     std::string getMethod();
 
     std::string toRequestString();
-    void parseFromMessageString(std::string &);
+    void parseFromMessageString(std::string &) {};
 
     std::vector<uint8_t> encode();
 };
@@ -60,6 +60,7 @@ private:
     std::string statusDef;
 public:
     // TODO: build a constructor that takes vector/array of bytes as input
+    //
 
     static const int SC_OK = 200;
     static const int SC_BAD_REQUEST = 400;

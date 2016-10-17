@@ -12,6 +12,7 @@
  */
 
 #include <cstdlib>
+#include <string> // for to_string method
 
 #include "httpTransaction.h"
 
@@ -20,13 +21,15 @@ using namespace std;
 /*
  * 
  */
-void HttpTransaction :: HttpTransaction(){
+HttpTransaction :: HttpTransaction(){
     httpVersion = "";
     headers.clear();
 }
+
 void HttpTransaction :: setHeaders(string& key, string& value){
     headers[key] = value;
 }
+
 string HttpTransaction ::getHeaders(){
     string result = "";
     map<string, string>::iterator iter = headers.begin();
@@ -38,6 +41,7 @@ string HttpTransaction ::getHeaders(){
 	result = result + "\r\n";
 	return result;
 }
+
 string HttpTransaction ::getHeader(string& key){
     if(headers.count(key) > 0){
         return headers[key];
@@ -46,37 +50,45 @@ string HttpTransaction ::getHeader(string& key){
     }
     
 }
+
 void HttpTransaction ::setHttpVersion(string& version){
     httpVersion = version;
 }
+
 string HttpTransaction::getHttpVersion(){
     return httpVersion;
 }
 
-void HttpRequest::setRequestUrl(string& uri){
-    requestUrl = uri;
+void HttpRequest::setRequestUri(string& uri){
+    requestUri = uri;
 }
-string HttpRequest::getRequestUrl(){
-    return requestUrl;
+
+string HttpRequest::getRequestUri(){
+    return requestUri;
 }
-string HttpRequest::setMethod(string& newMethod){
+
+void HttpRequest::setMethod(string& newMethod){
     method = newMethod;
 }
+
 string HttpRequest::getMethod(){
     return method;
 }
+
 string HttpRequest::toRequestString(){
     string result = "";
-    result = result + getMethod() + " " + getRequestUrl() + " " + getHttpVersion() + "\r\n";
+    result = result + getMethod() + " " + getRequestUri() + " " + getHttpVersion() + "\r\n";
     result = result + getHeaders();
     return result;
 }
+
 vector<uint8_t> HttpRequest::encode(){
     string str = toRequestString();
-    vector<unit8_t> result;
+    vector<uint8_t> result;
     result.assign(str.begin(), str.end());
     return result;
 }
+
 void HttpResponse::setStatus(int responsestatus){
     status = responsestatus;
     switch(status){
@@ -90,9 +102,11 @@ void HttpResponse::setStatus(int responsestatus){
             statusDef = "Not found";
     }
 }
-void HttpResponse::getStatus(){
+
+int HttpResponse::getStatus(){
     return status;
 }
+
 string HttpResponse::getStatusDefinition(){
     return statusDef;
 }
@@ -100,10 +114,10 @@ string HttpResponse::getStatusDefinition(){
     string result;
     
 }*/
-vector<unit8_t> HttpResponse::encode(){
-    vector<unit8_t> result;
+vector<uint8_t> HttpResponse::encode(){
+    vector<uint8_t> result;
     string str = "";
-    str = str + getHttpVersion() + " " + getStatus() + " " + getStatusDefinition() + "\r\n";
+    str = str + getHttpVersion() + " " + to_string(getStatus()) + " " + getStatusDefinition() + "\r\n";
     str = str + getHeaders();
     result.assign(str.begin(), str.end());
     

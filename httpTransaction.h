@@ -20,7 +20,7 @@
 #include <cstdint>
 //typedef unsigned char uint8_t;
 typedef std::map<std::string, std::string> HeaderMap;
-typedef std::vector<std::uint8_t> ByteVector;
+typedef std::vector<char> ByteVector;
 
 class HttpTransaction {
 private:
@@ -40,12 +40,12 @@ public:
 class HttpRequest: public HttpTransaction {
 private:
     std::string method;
-    std::string requestUrl;
+    std::string requestUri;
 public:
     // TODO: build a constructor that takes vector/array of bytes as input
 
-    void setRequestUrl(std::string &);
-    std::string getRequestUrl();
+    void setRequestUri(std::string &);
+    std::string getRequestUri();
 
     void setMethod(std::string&);
     std::string getMethod();
@@ -53,8 +53,9 @@ public:
     std::string toRequestString();
     void parseFromMessageString(std::string &);
 
-    std::vector<std::uint8_t> encode();
+    std::vector<char> encode();
     bool decodeFirstline(ByteVector&);
+    bool consume(ByteVector&);
 };
 
 class HttpResponse: public HttpTransaction {
@@ -72,8 +73,9 @@ public:
     int getStatus();
     std::string getStatusDefinition();
     //std::string toResponseString();
-    std::vector<std::uint8_t> encode();
+    std::vector<char> encode();
     bool decodeFirstline(ByteVector&);
+    bool consume(ByteVector&);
     // use std::istream type to represent file in the content
 };
 

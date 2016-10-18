@@ -13,6 +13,9 @@
 
 #include <cstdlib>
 #include <string>
+#include <iostream>
+#include <fstream>
+#include <sstream>
 #include "httpTransaction.h"
 
 using namespace std;
@@ -38,13 +41,12 @@ string HttpTransaction ::getHeaders(){
 	result = result + "\r\n";
 	return result;
 }
-string HttpTransaction ::getHeader(string& key){
+string HttpTransaction::getHeader(string& key){
     if(headers.count(key) > 0){
         return headers[key];
     }else{
         return "none";
-    }
-    
+    }  
 }
 void HttpTransaction ::setHttpVersion(string& version){
     httpVersion = version;
@@ -53,11 +55,11 @@ string HttpTransaction::getHttpVersion(){
     return httpVersion;
 }
 
-void HttpRequest::setRequestUrl(string& uri){
-    requestUrl = uri;
+void HttpRequest::setRequestUri(string& uri){
+    requestUri = uri;
 }
-string HttpRequest::getRequestUrl(){
-    return requestUrl;
+string HttpRequest::getRequestUri(){
+    return requestUri;
 }
 void HttpRequest::setMethod(string& newMethod){
     method = newMethod;
@@ -67,13 +69,13 @@ string HttpRequest::getMethod(){
 }
 string HttpRequest::toRequestString(){
     string result = "";
-    result = result + getMethod() + " " + getRequestUrl() + " " + getHttpVersion() + "\r\n";
+    result = result + getMethod() + " " + getRequestUri() + " " + getHttpVersion() + "\r\n";
     result = result + getHeaders();
     return result;
 }
-vector<uint8_t> HttpRequest::encode(){
+vector<char> HttpRequest::encode(){
     string str = toRequestString();
-    vector<uint8_t> result;
+    vector<char> result;
     result.assign(str.begin(), str.end());
     return result;
 }
@@ -87,7 +89,7 @@ bool HttpRequest::decodeFirstline(ByteVector& first){
                 setMethod(str);
                 str = "";
             }else if(numOfSp == 2){
-                setRequestUrl(str);
+                setRequestUri(str);
                 str = "";
             }
             if(i > 0 && first[i - 1] == ' ' && numOfSp > 2){
@@ -95,7 +97,7 @@ bool HttpRequest::decodeFirstline(ByteVector& first){
             }
             continue;
         }
-        str = str.append(first[i]);
+        str = str + first[i];;
     }
     setHttpVersion(str);
     if(getMethod().compare("GET") != 0){
@@ -104,6 +106,60 @@ bool HttpRequest::decodeFirstline(ByteVector& first){
     if(getHttpVersion().compare("HTTP/1.0") != 0){
         return false;
     }
+    return true;
+}
+//split helper
+void split(const string &s, vector<string> &elems) {
+        stringstream ss;
+        ss.str(s);
+        string item;
+        while (getline(ss, item)) {
+            if ( item.size() && item[item.size()-1] == '\r' ){
+            item = item.substr( 0, item.size() - 1 );
+            }
+            elems.push_back(item);
+        }
+    }
+void HttpTransaction::decodeHeaders(ByteVector& lines){
+    vector<string> elems;
+    string s(lines.begin(), lines.end());
+    split(s, elems);
+    string key = "";
+    string value = "";
+    for(unsigned int i = 0; i < elems.size(); i++){
+        int pos = elems[i].find(':');
+        key = elems[i].substr(0, pos);
+        value = elems[i].substr(pos + 2, elems[i].length() - pos - 2);
+        setHeaders(key, value);
+        key = "";
+        value = "";
+    }
+}
+bool HttpRequest::consume(ByteVector& wire){
+    ByteVector Firstline;
+    ByteVector Headerlines;
+    unsigned int i = 0;
+    int flag = 0;
+    while(i < wire.size()){
+        if(i >= 4 && wire[i - 4] == '\r' && wire[i - 3] == '\n' && 
+                wire[i - 2] == '\r' && wire[i - 1] == '\n' && flag == 1){
+            flag = 2;
+        }else if(i >= 2 && wire[i - 2] == '\r' && wire[i - 1] == '\n' && flag == 0){
+            flag = 1;
+        }
+        if(flag == 0){
+            Firstline.push_back(wire[i]);
+        }else if(flag == 1){
+            Headerlines.push_back(wire[i]);
+        }else{
+            break;
+        }
+        i++;
+    }
+    if(!decodeFirstline(Firstline)){
+        return false;
+    }
+    decodeHeaders(Headerlines);
     return true;
 }
 void HttpResponse::setStatus(int responsestatus){
@@ -119,7 +175,7 @@ void HttpResponse::setStatus(int responsestatus){
             statusDef = "Not found";
     }
 }
-void HttpResponse::getStatus(){
+int HttpResponse::getStatus(){
     return status;
 }
 string HttpResponse::getStatusDefinition(){
@@ -129,10 +185,11 @@ string HttpResponse::getStatusDefinition(){
     string result;
     
 }*/
-vector<uint8_t> HttpResponse::encode(){
-    vector<uint8_t> result;
+vector<char> HttpResponse::encode(){
+    vector<char> result;
     string str = "";
-    str = str + getHttpVersion() + " " + getStatus() + " " + getStatusDefinition() + "\r\n";
+    string statusString = to_string(getStatus());
+    str = str + getHttpVersion() + " " + statusString + " " + getStatusDefinition() + "\r\n";
     str = str + getHeaders();
     result.assign(str.begin(), str.end());
     
@@ -153,7 +210,34 @@ bool HttpResponse::decodeFirstline(ByteVector& first){
             }
             continue;
         }
-        str.append(first[i]);
+        str = str + first[i];
     }
+    return true;
+}
+bool HttpResponse::consume(ByteVector& wire){
+    ByteVector Firstline;
+    ByteVector Headerlines;
+    unsigned int i = 0;
+    int flag = 0;
+    while(i < wire.size()){
+        if(i >= 4 && wire[i - 4] == '\r' && wire[i - 3] == '\n' && 
+                wire[i - 2] == '\r' && wire[i - 1] == '\n' && flag == 1){
+            flag = 2;
+        }else if(i >= 2 && wire[i - 2] == '\r' && wire[i - 1] == '\n' && flag == 0){
+            flag = 1;
+        }
+        if(flag == 0){
+            Firstline.push_back(wire[i]);
+        }else if(flag == 1){
+            Headerlines.push_back(wire[i]);
+        }else{
+            break;
+        }
+        i++;
+    }
+    if(!decodeFirstline(Firstline)){
+        return false;
+    }
+    decodeHeaders(Headerlines);
     return true;
 }

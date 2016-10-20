@@ -114,10 +114,12 @@ void split(const string &s, vector<string> &elems) {
         ss.str(s);
         string item;
         while (getline(ss, item)) {
-            if ( item.size() && item[item.size()-1] == '\r' ){
+            if ( item.size() != 0 && item[item.size()-1] == '\r' ){
             item = item.substr( 0, item.size() - 1 );
             }
-            elems.push_back(item);
+            if(item.size() != 0){
+                elems.push_back(item);
+            }
         }
     }
 void HttpTransaction::decodeHeaders(ByteVector& lines){
@@ -127,9 +129,20 @@ void HttpTransaction::decodeHeaders(ByteVector& lines){
     string key = "";
     string value = "";
     for(unsigned int i = 0; i < elems.size(); i++){
-        int pos = elems[i].find(':');
+        unsigned int pos = elems[i].find(':');
+        if(pos == elems[i].npos){
+            key == elems[i];
+            setHeaders(key, value);
+            key = "";
+            value = "";
+            continue;
+        }
         key = elems[i].substr(0, pos);
-        value = elems[i].substr(pos + 2, elems[i].length() - pos - 2);
+        if(pos + 2 >= elems[i].length()){
+            value = "";
+        }else{
+            value = elems[i].substr(pos + 2, elems[i].length() - pos - 2);
+        }
         setHeaders(key, value);
         key = "";
         value = "";
@@ -181,10 +194,14 @@ int HttpResponse::getStatus(){
 string HttpResponse::getStatusDefinition(){
     return statusDef;
 }
-/*string HttpResponse::toResponseString(){
-    string result;
+string HttpResponse::toResponseString(){
+    string str = "";
+    string statusString = to_string(getStatus());
+    str = str + getHttpVersion() + " " + statusString + " " + getStatusDefinition() + "\r\n";
+    str = str + getHeaders();
+    return str;
     
-}*/
+}
 vector<char> HttpResponse::encode(){
     vector<char> result;
     string str = "";

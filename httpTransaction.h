@@ -72,7 +72,7 @@ public:
     void setStatus(int);
     int getStatus();
     std::string getStatusDefinition();
-    //std::string toResponseString();
+    std::string toResponseString();
     std::vector<char> encode();
     bool decodeFirstline(ByteVector&);
     bool consume(ByteVector&);

@@ -118,7 +118,7 @@ void HttpTransaction::decodeHeaders(ByteVector& lines){
     for(unsigned int i = 0; i < elems.size(); i++){
         unsigned int pos = elems[i].find_first_of(':');
         if(pos >= elems[i].length()){
-            key == elems[i];
+            key = elems[i];
             setHeaders(key, value);
             key = "";
             value = "";
